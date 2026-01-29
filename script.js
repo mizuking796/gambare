@@ -54,23 +54,20 @@ let lastTime = 0;
 function initAudio() {
   const audioFile = selectedVoice === 'm' ? 'm.mp3' : 'f.mp3';
   alertAudio = new Audio(audioFile);
-  alertAudio.volume = 1.0;  // 最大音量
   alertAudio.addEventListener('ended', () => {
     isPlaying = false;
   });
-  alertAudio.load();
 }
 
 // Play alert once
 function playAlertOnce() {
-  if (!alertAudio || isPlaying) return;
+  if (!alertAudio) return;
 
   alertAudio.currentTime = 0;
   alertAudio.play().then(() => {
     isPlaying = true;
   }).catch(e => {
     console.error('Audio play failed:', e);
-    isPlaying = false;
   });
 }
 
@@ -83,7 +80,6 @@ function startContinuousPlay() {
   alertAudio.play().catch(e => {
     console.error('Audio play failed:', e);
   });
-  isPlaying = true;
 }
 
 // Stop all audio
@@ -347,12 +343,10 @@ startButton.addEventListener('click', async () => {
   // Initialize audio
   initAudio();
 
-  // Play test sound to unlock audio (required for mobile)
-  alertAudio.volume = 0.01;
+  // Play short sound to unlock audio (required for mobile)
   await alertAudio.play().catch(() => {});
   alertAudio.pause();
   alertAudio.currentTime = 0;
-  alertAudio.volume = 1.0;
 
   // Hide overlay
   startOverlay.classList.add('hidden');
