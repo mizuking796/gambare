@@ -220,6 +220,23 @@ h1 {
   font-size: 14px;
 }
 
+.back-button {
+  margin-top: 10px;
+  background: transparent;
+  color: #888;
+  border: 1px solid #444;
+  padding: 8px 20px;
+  font-size: 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  color: #4ade80;
+  border-color: #4ade80;
+}
+
 .result-container {
   margin-top: 25px;
   background: linear-gradient(135deg, #1e1e3a 0%, #1f2d3d 100%);

@@ -20,6 +20,7 @@ const fatigueFillEl = document.getElementById("fatigue-fill");
 const fatigueIconEl = document.getElementById("fatigue-icon");
 const startOverlay = document.getElementById("start-overlay");
 const startButton = document.getElementById("start-button");
+const backButton = document.getElementById("back-button");
 
 // State
 let faceLandmarker = null;
@@ -195,8 +196,8 @@ function calculateEyeAspectRatio(landmarks) {
 function checkEyeOpen(ear) {
   if (baselineEAR === null) return true;  // キャリブレーション中は開眼とみなす
 
-  // ベースラインの30%以下なら閉眼
-  const closedThreshold = baselineEAR * 0.3;
+  // ベースラインの15%以下なら閉眼（しっかり閉じた場合のみ）
+  const closedThreshold = baselineEAR * 0.15;
   return ear >= closedThreshold;
 }
 
@@ -226,8 +227,8 @@ function updateEyeFatigue(ear) {
   const windowStart = now - (PERCLOS_WINDOW * 1000);
   earHistory = earHistory.filter(e => e.time >= windowStart);
 
-  // Calculate PERCLOS
-  const closedThreshold = baselineEAR * 0.2;
+  // Calculate PERCLOS（しっかり閉じた場合のみカウント）
+  const closedThreshold = baselineEAR * 0.15;
   const closedFrames = earHistory.filter(e => e.ear < closedThreshold).length;
   const perclos = earHistory.length > 0 ? (closedFrames / earHistory.length) : 0;
 
@@ -274,6 +275,11 @@ function updateFatigueUI(fatigue) {
     fatigueIconEl.textContent = '👁️';
   }
 }
+
+// Back button handler - reload page to return to start
+backButton.addEventListener('click', () => {
+  location.reload();
+});
 
 // Start button handler
 startButton.addEventListener('click', async () => {
