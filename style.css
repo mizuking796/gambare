@@ -377,8 +377,8 @@ h1 {
   }
 
   #video {
-    width: 280px;
-    max-width: 85vw;
+    width: 260px;
+    max-width: 80vw;
   }
 
   .eye-fatigue {
@@ -392,39 +392,67 @@ h1 {
   }
 
   .result-container {
-    margin-top: 15px;
-    padding: 15px;
+    margin-top: 12px;
+    padding: 12px;
   }
 
   .fatigue-display {
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
   }
 
   .fatigue-icon {
-    font-size: 40px;
+    font-size: 36px;
   }
 
   .fatigue-value {
-    font-size: 40px;
+    font-size: 36px;
   }
 
   .fatigue-label {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .status-container {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
   .awake-button {
-    padding: 10px 20px;
-    font-size: 14px;
+    padding: 8px 16px;
+    font-size: 13px;
   }
 
   .back-button {
-    padding: 6px 15px;
-    font-size: 11px;
+    padding: 5px 12px;
+    font-size: 10px;
+  }
+
+  .fatigue-bar-container {
+    max-width: 100%;
+  }
+
+  .fatigue-markers {
+    font-size: 10px;
+  }
+}
+
+/* iPhone 13 and smaller */
+@media (max-width: 400px) {
+  #video {
+    width: 220px;
+    max-width: 75vw;
+  }
+
+  .fatigue-icon {
+    font-size: 30px;
+  }
+
+  .fatigue-value {
+    font-size: 30px;
+  }
+
+  .result-container {
+    padding: 10px;
   }
 }
 
