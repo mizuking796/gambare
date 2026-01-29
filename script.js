@@ -24,8 +24,12 @@ const fatigueFillEl = document.getElementById("fatigue-fill");
 const fatigueIconEl = document.getElementById("fatigue-icon");
 const startOverlay = document.getElementById("start-overlay");
 const startButton = document.getElementById("start-button");
-const backButton = document.getElementById("back-button");
+const voiceChangeButton = document.getElementById("voice-change-button");
 const awakeButton = document.getElementById("awake-button");
+const voiceModal = document.getElementById("voice-modal");
+const voiceMBtn = document.getElementById("voice-m-btn");
+const voiceFBtn = document.getElementById("voice-f-btn");
+const voiceModalClose = document.getElementById("voice-modal-close");
 
 // State
 let faceLandmarker = null;
@@ -368,9 +372,34 @@ function updateFatigueUI(fatigue) {
   }
 }
 
-// Back button handler - reload page to return to start
-backButton.addEventListener('click', () => {
-  location.reload();
+// Voice change button handler - show modal
+voiceChangeButton.addEventListener('click', () => {
+  // Update selected state
+  voiceMBtn.classList.toggle('selected', selectedVoice === 'm');
+  voiceFBtn.classList.toggle('selected', selectedVoice === 'f');
+  voiceModal.classList.remove('hidden');
+});
+
+// Voice selection handlers
+voiceMBtn.addEventListener('click', () => {
+  selectedVoice = 'm';
+  initAudio();
+  voiceMBtn.classList.add('selected');
+  voiceFBtn.classList.remove('selected');
+  voiceModal.classList.add('hidden');
+});
+
+voiceFBtn.addEventListener('click', () => {
+  selectedVoice = 'f';
+  initAudio();
+  voiceFBtn.classList.add('selected');
+  voiceMBtn.classList.remove('selected');
+  voiceModal.classList.add('hidden');
+});
+
+// Voice modal close handler
+voiceModalClose.addEventListener('click', () => {
+  voiceModal.classList.add('hidden');
 });
 
 // Awake button handler - start cooldown

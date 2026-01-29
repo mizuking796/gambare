@@ -53,7 +53,19 @@
     <div class="status-container">
       <div id="status" class="status">Loading...</div>
       <button id="awake-button" class="awake-button hidden">目が覚めた</button>
-      <button id="back-button" class="back-button">音声を変更</button>
+      <button id="voice-change-button" class="back-button">音声を変更</button>
+    </div>
+
+    <!-- Voice change modal -->
+    <div id="voice-modal" class="voice-modal hidden">
+      <div class="voice-modal-content">
+        <p>音声を選択</p>
+        <div class="voice-modal-options">
+          <button id="voice-m-btn" class="voice-modal-btn">男性の声</button>
+          <button id="voice-f-btn" class="voice-modal-btn">女性の声</button>
+        </div>
+        <button id="voice-modal-close" class="voice-modal-close">閉じる</button>
+      </div>
     </div>
     <div class="result-container">
       <div class="fatigue-display">
