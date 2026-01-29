@@ -33,6 +33,7 @@ let isPlaying = false;
 let alertIntervalId = null;
 let currentAlertMode = 'none';  // 'none', 'interval', 'continuous'
 let lastAlertStopTime = 0;      // アラート停止時刻
+let wasHighAlert = false;       // 70%以上のアラートだったか
 
 // Eye tracking
 let eyeClosedStartTime = null;  // 閉眼開始時刻
@@ -103,8 +104,9 @@ function stopAudio() {
   currentAlertMode = 'none';
 }
 
-// Check if in cooldown period
+// Check if in cooldown period (70%以上のアラート後のみ)
 function isInCooldown() {
+  if (!wasHighAlert) return false;
   return (Date.now() - lastAlertStopTime) < ALERT_COOLDOWN;
 }
 
@@ -113,20 +115,28 @@ function updateAlert(fatigue, eyeOpen) {
   // 開眼確認で即停止
   if (eyeOpen) {
     if (currentAlertMode !== 'none') {
+      // 70%以上またはcontinuousモードだった場合のみクールタイム適用
+      if (currentAlertMode === 'continuous') {
+        wasHighAlert = true;
+        lastAlertStopTime = Date.now();
+      }
       stopAudio();
       eyeClosedWarningEl.classList.add('hidden');
-      lastAlertStopTime = Date.now();  // クールタイム開始
     }
     eyeClosedStartTime = null;
     return;
   }
 
-  // クールタイム中はアラートを鳴らさない
+  // クールタイム中はアラートを鳴らさない（70%以上だった場合のみ）
   if (isInCooldown()) {
     const remaining = Math.ceil((ALERT_COOLDOWN - (Date.now() - lastAlertStopTime)) / 1000);
     eyeClosedWarningEl.classList.remove('hidden');
     eyeClosedWarningEl.textContent = `クールタイム ${remaining}秒`;
+    eyeClosedWarningEl.style.background = 'rgba(74, 222, 128, 0.9)';
     return;
+  } else {
+    wasHighAlert = false;
+    eyeClosedWarningEl.style.background = 'rgba(255, 107, 107, 0.9)';
   }
 
   // 閉眼時間チェック
