@@ -120,12 +120,28 @@ function isInGracePeriod() {
   return (Date.now() - lastOpenEyeTime) < OPEN_EYE_GRACE_PERIOD;
 }
 
+// Stop audio but let current sound finish
+function stopAlertButFinishCurrent() {
+  // インターバルは停止（次の再生を防ぐ）
+  if (alertIntervalId) {
+    clearInterval(alertIntervalId);
+    alertIntervalId = null;
+  }
+
+  // ループを解除（現在の再生は最後まで続く）
+  if (alertAudio) {
+    alertAudio.loop = false;
+  }
+
+  currentAlertMode = 'none';
+}
+
 // Update alert based on fatigue and eye state
 function updateAlert(fatigue, eyeOpen) {
-  // 開眼確認で即停止
+  // 開眼確認で停止（ただし再生中の音声は最後まで）
   if (eyeOpen) {
     if (currentAlertMode !== 'none') {
-      stopAudio();
+      stopAlertButFinishCurrent();
     }
     lastOpenEyeTime = Date.now();
     eyeClosedStartTime = null;

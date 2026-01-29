@@ -108,6 +108,43 @@
     .alert-table td {
       color: #ccc;
     }
+    .tech-list {
+      list-style: none;
+      padding: 0;
+    }
+    .tech-list li {
+      color: #ccc;
+      padding: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .tech-badge {
+      background: rgba(74, 222, 128, 0.2);
+      color: #4ade80;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .idea-list {
+      list-style: none;
+      padding: 0;
+    }
+    .idea-list li {
+      color: #ccc;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .idea-list li:last-child {
+      border-bottom: none;
+    }
+    .idea-title {
+      color: #feca57;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
     .back-link {
       display: inline-block;
       margin-top: 20px;
@@ -139,13 +176,14 @@
       </p>
       <p>
         PERCLOSは、運転中の眠気検知などにも使われている信頼性の高い指標です。
+        一瞬のまばたきではなく、「どのくらいの時間、目が閉じがちになっているか」を測定します。
       </p>
     </div>
 
     <div class="section">
       <h2>📐 EAR（Eye Aspect Ratio）とは</h2>
       <p>
-        まず、カメラで検出した目のランドマーク（特徴点）から、
+        カメラで検出した目のランドマーク（特徴点）から、
         <span class="highlight">目の縦幅と横幅の比率</span>を計算します。
       </p>
       <div class="formula">
@@ -163,15 +201,15 @@
       <ol class="step-list">
         <li>
           <span class="step-num">1</span>
-          <span>過去<span class="highlight">20秒間</span>のEARデータを記録</span>
+          <span>過去<span class="highlight">30秒間</span>のEARデータを記録</span>
         </li>
         <li>
           <span class="step-num">2</span>
-          <span>ベースラインの<span class="highlight">20%以下</span>になった回数をカウント（これが「閉眼」）</span>
+          <span>ベースラインの<span class="highlight">15%以下</span>になった回数をカウント（これが「閉眼」）</span>
         </li>
         <li>
           <span class="step-num">3</span>
-          <span>20秒間のうち何%が閉眼だったかを計算（PERCLOS値）</span>
+          <span>30秒間のうち何%が閉眼だったかを計算（PERCLOS値）</span>
         </li>
         <li>
           <span class="step-num">4</span>
@@ -179,10 +217,10 @@
         </li>
       </ol>
       <div class="formula">
-        疲労度 = 20% + (PERCLOS × 200)
+        疲労度 = 20% + (PERCLOS × 120)
       </div>
       <p>
-        つまり、20秒間ずっと目を開けていれば疲労度は20%のまま。
+        30秒間ずっと目を開けていれば疲労度は20%のまま。
         閉眼が増えるほど疲労度が上がっていきます。
       </p>
     </div>
@@ -195,11 +233,11 @@
           <th>アラート</th>
         </tr>
         <tr>
-          <td><span class="warning">疲労度 50〜69%</span></td>
+          <td><span class="warning">疲労度 60〜79%</span></td>
           <td>2秒ごとに音声再生</td>
         </tr>
         <tr>
-          <td><span class="danger">疲労度 70%以上</span></td>
+          <td><span class="danger">疲労度 80%以上</span></td>
           <td>連続で音声再生</td>
         </tr>
         <tr>
@@ -208,22 +246,69 @@
         </tr>
       </table>
       <p>
-        目を開けるとアラートは<span class="highlight">即座に停止</span>します。
-        その後<span class="highlight">10秒間のクールタイム</span>があり、
-        すぐには再度鳴りません。
+        目を開けると新しいアラートは<span class="highlight">停止</span>します。
+        ただし再生中の音声は最後まで流れます。
+        その後<span class="highlight">5秒間</span>は再度アラートが鳴りません。
       </p>
+    </div>
+
+    <div class="section">
+      <h2>🛠️ 使用している技術</h2>
+      <ul class="tech-list">
+        <li>
+          <span class="tech-badge">MediaPipe</span>
+          Googleの顔認識AI。468個の顔の特徴点をリアルタイム検出
+        </li>
+        <li>
+          <span class="tech-badge">Web Audio API</span>
+          ブラウザ標準の音声処理。音量を2倍に増幅
+        </li>
+        <li>
+          <span class="tech-badge">Canvas API</span>
+          目の位置を四角で可視化
+        </li>
+        <li>
+          <span class="tech-badge">音読さん</span>
+          アラート音声の生成に使用
+        </li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>💡 工夫した点</h2>
+      <ul class="idea-list">
+        <li>
+          <span class="idea-title">個人差への対応</span>
+          起動時に3秒間キャリブレーションを行い、その人の「普通の目の開き具合」を基準にする。目の大きさや形は人それぞれなので、絶対値ではなく相対値で判定。
+        </li>
+        <li>
+          <span class="idea-title">敏感すぎない閾値設定</span>
+          ベースラインの15%以下で「閉眼」と判定。まばたき程度では反応せず、しっかり目を閉じた時だけカウントされる。
+        </li>
+        <li>
+          <span class="idea-title">緩やかな疲労度変化</span>
+          30秒間のウィンドウで平均化することで、一瞬の閉眼で疲労度が急上昇しない。本当に眠くなってきた時だけ反応する設計。
+        </li>
+        <li>
+          <span class="idea-title">うるさくなりすぎない配慮</span>
+          開眼確認後5秒間はアラートを鳴らさない。また、再生中の音声は途中で切らず最後まで流す。
+        </li>
+        <li>
+          <span class="idea-title">緊急時の即時対応</span>
+          5秒以上の閉眼は疲労度に関係なく即座にアラート。居眠りの危険を見逃さない。
+        </li>
+      </ul>
     </div>
 
     <div class="section">
       <h2>👁️ 目の検出について</h2>
       <p>
-        <span class="highlight">MediaPipe FaceLandmarker</span>というGoogleの技術を使用して、
-        顔の468個の特徴点をリアルタイムで検出しています。
-        その中から目の周りの点を使ってEARを計算しています。
-      </p>
-      <p>
         画面上に表示される<span class="highlight">緑の四角</span>が検出された目の位置です。
         閉眼時は<span class="danger">赤い四角</span>に変わります。
+      </p>
+      <p>
+        MediaPipe FaceLandmarkerにより、約30fpsでリアルタイム処理を行っています。
+        GPUアクセラレーションにより、スマートフォンでもスムーズに動作します。
       </p>
     </div>
 
