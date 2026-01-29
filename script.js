@@ -180,6 +180,32 @@ function updateAlert(fatigue, eyeOpen) {
   }
 }
 
+// Draw eye boxes on canvas
+function drawEyeBoxes(landmarks) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const leftEyePoints = [33, 133, 159, 145];
+  const rightEyePoints = [362, 263, 386, 374];
+
+  function drawEyeBox(points, color) {
+    const xs = points.map(i => landmarks[i].x * canvas.width);
+    const ys = points.map(i => landmarks[i].y * canvas.height);
+
+    const minX = Math.min(...xs) - 10;
+    const maxX = Math.max(...xs) + 10;
+    const minY = Math.min(...ys) - 10;
+    const maxY = Math.max(...ys) + 10;
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+  }
+
+  const color = isEyeClosed ? '#ff6b6b' : '#4ade80';
+  drawEyeBox(leftEyePoints, color);
+  drawEyeBox(rightEyePoints, color);
+}
+
 // Calculate Eye Aspect Ratio
 function calculateEyeAspectRatio(landmarks) {
   const leftEye = {
@@ -376,7 +402,11 @@ async function process(time) {
       const ear = calculateEyeAspectRatio(landmarks);
       updateEyeFatigue(ear);
 
+      // Draw eye boxes
+      drawEyeBoxes(landmarks);
+
     } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       // Face not detected
       eyeFatigueEl.textContent = "顔が検出されません";
       eyeFatigueEl.style.color = "#888";
