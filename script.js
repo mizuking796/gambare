@@ -3,8 +3,8 @@ import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 // ============================================
 // 設定
 // ============================================
-const ALERT_START_THRESHOLD = 60;     // 60%から2秒毎にアラート
-const CONTINUOUS_THRESHOLD = 80;      // 80%から連続再生
+const ALERT_START_THRESHOLD = 50;     // 50%から2秒毎にアラート
+const CONTINUOUS_THRESHOLD = 70;      // 70%から連続再生
 const EYE_CLOSED_DURATION = 5000;     // 5秒閉眼でアラート
 const ALERT_INTERVAL = 2000;          // 2秒毎にアラート
 const OPEN_EYE_GRACE_PERIOD = 5000;   // 開眼後5秒間はアラートを鳴らさない
@@ -269,9 +269,16 @@ function updateEyeFatigue(ear) {
     currentFatigue = 20;
     updateFatigueUI(20);
 
+    // Show calibration message
+    const remaining = Math.ceil((90 - calibrationFrames.length) / 30);
+    statusEl.textContent = `キャリブレーション中... 普段通り目を開けてください (${remaining}秒)`;
+    statusEl.style.color = '#feca57';
+
     if (calibrationFrames.length >= 90) {
       calibrationFrames.sort((a, b) => b - a);
       baselineEAR = calibrationFrames[Math.floor(calibrationFrames.length * 0.2)];
+      statusEl.textContent = '測定中';
+      statusEl.style.color = '#888';
     }
     return;
   }
