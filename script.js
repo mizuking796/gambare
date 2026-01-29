@@ -358,13 +358,13 @@ function updateFatigueUI(fatigue) {
   fatigueFillEl.style.width = `${fatigue}%`;
   fatigueFillEl.style.background = `linear-gradient(90deg, #4ade80, ${color})`;
 
-  // Icon based on fatigue level only
+  // Icon based on fatigue level (face scale)
   if (fatigue >= 70) {
     fatigueIconEl.textContent = '😫';
   } else if (fatigue >= 50) {
     fatigueIconEl.textContent = '😐';
   } else {
-    fatigueIconEl.textContent = '👁️';
+    fatigueIconEl.textContent = '😊';
   }
 }
 
