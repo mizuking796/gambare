@@ -5,6 +5,7 @@ import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 // ============================================
 const ALERT_START_THRESHOLD = 50;     // 50%から2秒毎にアラート
 const CONTINUOUS_THRESHOLD = 70;      // 70%から連続再生
+const SPEED_UP_THRESHOLD = 90;        // 90%から2倍速
 const EYE_CLOSED_DURATION = 5000;     // 5秒閉眼でアラート
 const ALERT_INTERVAL = 2000;          // 2秒毎にアラート
 const COOLDOWN_DURATION = 30000;      // 30秒クールダウン
@@ -223,6 +224,11 @@ function updateAlert(fatigue, eyeOpen) {
     if (!isInCooldown()) {
       awakeButton.classList.add('hidden');
     }
+  }
+
+  // 90%以上で2倍速
+  if (alertAudio) {
+    alertAudio.playbackRate = fatigue >= SPEED_UP_THRESHOLD ? 2.0 : 1.0;
   }
 }
 
