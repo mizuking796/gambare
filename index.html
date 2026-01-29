@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eye Fatigue Monitor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Start overlay -->
+  <div id="start-overlay" class="start-overlay">
+    <div class="start-content">
+      <div class="start-icon">👁️</div>
+      <h2>Eye Fatigue Monitor</h2>
+      <p>カメラで目の疲労度を測定します</p>
+
+      <div class="voice-selection">
+        <p class="voice-label">アラート音声を選択</p>
+        <div class="voice-options">
+          <label class="voice-option">
+            <input type="radio" name="voice" value="m" checked>
+            <span class="voice-btn">男性</span>
+          </label>
+          <label class="voice-option">
+            <input type="radio" name="voice" value="f">
+            <span class="voice-btn">女性</span>
+          </label>
+        </div>
+      </div>
+
+      <button id="start-button" class="start-button">タップして開始</button>
+      <p class="start-hint">※ カメラと音声の許可が必要です</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Eye Fatigue Monitor</h1>
+    <div class="video-container">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+      <div id="eye-fatigue" class="eye-fatigue">目の疲労度: 20%</div>
+      <div id="eye-closed-warning" class="eye-closed-warning hidden">閉眼検出中...</div>
+    </div>
+    <div class="status-container">
+      <div id="status" class="status">Loading...</div>
+    </div>
+    <div class="result-container">
+      <div class="fatigue-display">
+        <div id="fatigue-icon" class="fatigue-icon">👁️</div>
+        <div class="fatigue-info">
+          <span id="fatigue-value" class="fatigue-value">20</span>
+          <span class="fatigue-label">% 疲労度</span>
+        </div>
+      </div>
+      <div class="fatigue-bar-container">
+        <div class="fatigue-bar">
+          <div id="fatigue-fill" class="fatigue-fill"></div>
+        </div>
+        <div class="fatigue-markers">
+          <span>0%</span>
+          <span>50%</span>
+          <span>100%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="script.js"></script>
+</body>
+</html>
