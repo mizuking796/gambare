@@ -3,11 +3,12 @@ import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 // ============================================
 // 設定
 // ============================================
-const ALERT_START_THRESHOLD = 50;    // 50%から2秒毎にアラート
-const CONTINUOUS_THRESHOLD = 70;      // 70%から連続再生
+const ALERT_START_THRESHOLD = 60;     // 60%から2秒毎にアラート
+const CONTINUOUS_THRESHOLD = 80;      // 80%から連続再生
 const EYE_CLOSED_DURATION = 5000;     // 5秒閉眼でアラート
-const ALERT_INTERVAL = 2000;          // 2秒毎にアラート（50-69%時）
-const ALERT_COOLDOWN = 10 * 1000;     // 10秒間のクールタイム
+const ALERT_INTERVAL = 2000;          // 2秒毎にアラート（60-79%時）
+const COOLDOWN_INTERVAL = 5 * 1000;   // 60-79%時のクールタイム（5秒）
+const COOLDOWN_CONTINUOUS = 10 * 1000; // 80%以上時のクールタイム（10秒）
 // ============================================
 
 const video = document.getElementById("video");
@@ -29,11 +30,14 @@ let selectedVoice = 'm';  // 'm' or 'f'
 
 // Audio
 let alertAudio = null;
+let audioContext = null;
+let gainNode = null;
 let isPlaying = false;
 let alertIntervalId = null;
 let currentAlertMode = 'none';  // 'none', 'interval', 'continuous'
 let lastAlertStopTime = 0;      // アラート停止時刻
-let wasHighAlert = false;       // 70%以上のアラートだったか
+let lastAlertMode = 'none';     // 停止時のアラートモード
+const VOLUME_BOOST = 2.0;       // 音量ブースト（2倍）
 
 // Eye tracking
 let eyeClosedStartTime = null;  // 閉眼開始時刻
@@ -50,13 +54,21 @@ let calibrationFrames = [];
 let fps = 30;
 let lastTime = 0;
 
-// Initialize audio with selected voice
+// Initialize audio with selected voice and volume boost
 function initAudio() {
   const audioFile = selectedVoice === 'm' ? 'm.mp3' : 'f.mp3';
   alertAudio = new Audio(audioFile);
   alertAudio.addEventListener('ended', () => {
     isPlaying = false;
   });
+
+  // Web Audio API for volume boost
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioContext.createMediaElementSource(alertAudio);
+  gainNode = audioContext.createGain();
+  gainNode.gain.value = VOLUME_BOOST;
+  source.connect(gainNode);
+  gainNode.connect(audioContext.destination);
 
   // Preload
   alertAudio.load();
@@ -104,10 +116,17 @@ function stopAudio() {
   currentAlertMode = 'none';
 }
 
-// Check if in cooldown period (70%以上のアラート後のみ)
+// Get cooldown duration based on last alert mode
+function getCooldownDuration() {
+  if (lastAlertMode === 'continuous') return COOLDOWN_CONTINUOUS;
+  if (lastAlertMode === 'interval') return COOLDOWN_INTERVAL;
+  return 0;
+}
+
+// Check if in cooldown period
 function isInCooldown() {
-  if (!wasHighAlert) return false;
-  return (Date.now() - lastAlertStopTime) < ALERT_COOLDOWN;
+  if (lastAlertMode === 'none') return false;
+  return (Date.now() - lastAlertStopTime) < getCooldownDuration();
 }
 
 // Update alert based on fatigue and eye state
@@ -115,11 +134,8 @@ function updateAlert(fatigue, eyeOpen) {
   // 開眼確認で即停止
   if (eyeOpen) {
     if (currentAlertMode !== 'none') {
-      // 70%以上またはcontinuousモードだった場合のみクールタイム適用
-      if (currentAlertMode === 'continuous') {
-        wasHighAlert = true;
-        lastAlertStopTime = Date.now();
-      }
+      lastAlertMode = currentAlertMode;
+      lastAlertStopTime = Date.now();
       stopAudio();
       eyeClosedWarningEl.classList.add('hidden');
     }
@@ -127,15 +143,16 @@ function updateAlert(fatigue, eyeOpen) {
     return;
   }
 
-  // クールタイム中はアラートを鳴らさない（70%以上だった場合のみ）
+  // クールタイム中はアラートを鳴らさない
   if (isInCooldown()) {
-    const remaining = Math.ceil((ALERT_COOLDOWN - (Date.now() - lastAlertStopTime)) / 1000);
+    const cooldown = getCooldownDuration();
+    const remaining = Math.ceil((cooldown - (Date.now() - lastAlertStopTime)) / 1000);
     eyeClosedWarningEl.classList.remove('hidden');
     eyeClosedWarningEl.textContent = `クールタイム ${remaining}秒`;
     eyeClosedWarningEl.style.background = 'rgba(74, 222, 128, 0.9)';
     return;
   } else {
-    wasHighAlert = false;
+    lastAlertMode = 'none';
     eyeClosedWarningEl.style.background = 'rgba(255, 107, 107, 0.9)';
   }
 
@@ -166,14 +183,14 @@ function updateAlert(fatigue, eyeOpen) {
 
   // 疲労度ベースのアラート
   if (fatigue >= CONTINUOUS_THRESHOLD) {
-    // 70%以上：連続再生
+    // 80%以上：連続再生
     if (currentAlertMode !== 'continuous') {
       stopAudio();
       startContinuousPlay();
       currentAlertMode = 'continuous';
     }
   } else if (fatigue >= ALERT_START_THRESHOLD) {
-    // 50-69%：2秒毎
+    // 60-79%：2秒毎
     if (currentAlertMode !== 'interval') {
       stopAudio();
       playAlertOnce();
@@ -183,7 +200,7 @@ function updateAlert(fatigue, eyeOpen) {
       currentAlertMode = 'interval';
     }
   } else {
-    // 50%未満：停止
+    // 60%未満：停止
     if (currentAlertMode !== 'none') {
       stopAudio();
     }
@@ -343,11 +360,11 @@ startButton.addEventListener('click', async () => {
   initAudio();
 
   // Play test sound to unlock audio
-  alertAudio.volume = 0.1;
+  gainNode.gain.value = 0.1;
   await alertAudio.play().catch(() => {});
   alertAudio.pause();
   alertAudio.currentTime = 0;
-  alertAudio.volume = 1.0;
+  gainNode.gain.value = VOLUME_BOOST;
 
   // Hide overlay
   startOverlay.classList.add('hidden');
