@@ -42,7 +42,7 @@ let currentFatigue = 20;
 
 // Eye fatigue tracking (PERCLOS)
 let earHistory = [];
-const PERCLOS_WINDOW = 60;     // 60秒間のウィンドウ
+const PERCLOS_WINDOW = 20;     // 20秒間のウィンドウ
 let baselineEAR = null;
 let calibrationFrames = [];
 
