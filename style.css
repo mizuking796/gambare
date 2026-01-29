@@ -365,3 +365,66 @@ h1 {
   font-size: 12px;
 }
 
+/* Mobile responsive */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+
+  h1 {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  #video {
+    width: 280px;
+    max-width: 85vw;
+  }
+
+  .eye-fatigue {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .eye-closed-warning {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .result-container {
+    margin-top: 15px;
+    padding: 15px;
+  }
+
+  .fatigue-display {
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .fatigue-icon {
+    font-size: 40px;
+  }
+
+  .fatigue-value {
+    font-size: 40px;
+  }
+
+  .fatigue-label {
+    font-size: 14px;
+  }
+
+  .status-container {
+    margin-top: 10px;
+  }
+
+  .awake-button {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .back-button {
+    padding: 6px 15px;
+    font-size: 11px;
+  }
+}
+
