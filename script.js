@@ -6,9 +6,10 @@ import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 const ALERT_START_THRESHOLD = 60;     // 60%から2秒毎にアラート
 const CONTINUOUS_THRESHOLD = 80;      // 80%から連続再生
 const EYE_CLOSED_DURATION = 5000;     // 5秒閉眼でアラート
-const ALERT_INTERVAL = 2000;          // 2秒毎にアラート（60-79%時）
-const COOLDOWN_INTERVAL = 5 * 1000;   // 60-79%時のクールタイム（5秒）
-const COOLDOWN_CONTINUOUS = 10 * 1000; // 80%以上時のクールタイム（10秒）
+const ALERT_INTERVAL = 2000;          // 2秒毎にアラート
+const OPEN_EYE_GRACE_PERIOD = 5000;   // 開眼後5秒間はアラートを鳴らさない
+const PERCLOS_WINDOW = 30;            // 30秒間のウィンドウ（緩やかに）
+const FATIGUE_MULTIPLIER = 120;       // 疲労度係数（緩やかに）
 // ============================================
 
 const video = document.getElementById("video");
@@ -35,18 +36,16 @@ let gainNode = null;
 let isPlaying = false;
 let alertIntervalId = null;
 let currentAlertMode = 'none';  // 'none', 'interval', 'continuous'
-let lastAlertStopTime = 0;      // アラート停止時刻
-let lastAlertMode = 'none';     // 停止時のアラートモード
 const VOLUME_BOOST = 2.0;       // 音量ブースト（2倍）
 
 // Eye tracking
 let eyeClosedStartTime = null;  // 閉眼開始時刻
+let lastOpenEyeTime = 0;        // 最後に開眼を確認した時刻
 let isEyeClosed = false;
 let currentFatigue = 20;
 
 // Eye fatigue tracking (PERCLOS)
 let earHistory = [];
-const PERCLOS_WINDOW = 20;     // 20秒間のウィンドウ
 let baselineEAR = null;
 let calibrationFrames = [];
 
@@ -116,17 +115,9 @@ function stopAudio() {
   currentAlertMode = 'none';
 }
 
-// Get cooldown duration based on last alert mode
-function getCooldownDuration() {
-  if (lastAlertMode === 'continuous') return COOLDOWN_CONTINUOUS;
-  if (lastAlertMode === 'interval') return COOLDOWN_INTERVAL;
-  return 0;
-}
-
-// Check if in cooldown period
-function isInCooldown() {
-  if (lastAlertMode === 'none') return false;
-  return (Date.now() - lastAlertStopTime) < getCooldownDuration();
+// Check if in grace period after opening eyes
+function isInGracePeriod() {
+  return (Date.now() - lastOpenEyeTime) < OPEN_EYE_GRACE_PERIOD;
 }
 
 // Update alert based on fatigue and eye state
@@ -134,26 +125,17 @@ function updateAlert(fatigue, eyeOpen) {
   // 開眼確認で即停止
   if (eyeOpen) {
     if (currentAlertMode !== 'none') {
-      lastAlertMode = currentAlertMode;
-      lastAlertStopTime = Date.now();
       stopAudio();
-      eyeClosedWarningEl.classList.add('hidden');
     }
+    lastOpenEyeTime = Date.now();
     eyeClosedStartTime = null;
+    eyeClosedWarningEl.classList.add('hidden');
     return;
   }
 
-  // クールタイム中はアラートを鳴らさない
-  if (isInCooldown()) {
-    const cooldown = getCooldownDuration();
-    const remaining = Math.ceil((cooldown - (Date.now() - lastAlertStopTime)) / 1000);
-    eyeClosedWarningEl.classList.remove('hidden');
-    eyeClosedWarningEl.textContent = `クールタイム ${remaining}秒`;
-    eyeClosedWarningEl.style.background = 'rgba(74, 222, 128, 0.9)';
+  // 開眼後5秒間はアラートを鳴らさない（表示なし）
+  if (isInGracePeriod()) {
     return;
-  } else {
-    lastAlertMode = 'none';
-    eyeClosedWarningEl.style.background = 'rgba(255, 107, 107, 0.9)';
   }
 
   // 閉眼時間チェック
@@ -175,9 +157,11 @@ function updateAlert(fatigue, eyeOpen) {
         currentAlertMode = 'continuous';
       }
       return;
-    } else if (closedDuration >= 1000) {
+    } else if (closedDuration >= 2000) {
       eyeClosedWarningEl.classList.remove('hidden');
       eyeClosedWarningEl.textContent = `閉眼検出中... ${Math.floor(closedDuration / 1000)}秒`;
+    } else {
+      eyeClosedWarningEl.classList.add('hidden');
     }
   }
 
@@ -265,8 +249,8 @@ function calculateEyeAspectRatio(landmarks) {
 function checkEyeOpen(ear) {
   if (baselineEAR === null) return true;  // キャリブレーション中は開眼とみなす
 
-  // ベースラインの20%以下なら閉眼
-  const closedThreshold = baselineEAR * 0.2;
+  // ベースラインの15%以下なら閉眼（より厳しく）
+  const closedThreshold = baselineEAR * 0.15;
   return ear >= closedThreshold;
 }
 
@@ -292,18 +276,18 @@ function updateEyeFatigue(ear) {
   const now = performance.now();
   earHistory.push({ ear, time: now });
 
-  // Keep only last 60 seconds
+  // Keep only last PERCLOS_WINDOW seconds
   const windowStart = now - (PERCLOS_WINDOW * 1000);
   earHistory = earHistory.filter(e => e.time >= windowStart);
 
-  // Calculate PERCLOS
-  const closedThreshold = baselineEAR * 0.2;
+  // Calculate PERCLOS（より厳しい閾値で）
+  const closedThreshold = baselineEAR * 0.15;
   const closedFrames = earHistory.filter(e => e.ear < closedThreshold).length;
   const perclos = earHistory.length > 0 ? (closedFrames / earHistory.length) : 0;
 
   // Convert to fatigue percentage (20% base + PERCLOS contribution)
   const baseFatigue = 20;
-  const fatigue = Math.min(100, Math.round(baseFatigue + perclos * 200));
+  const fatigue = Math.min(100, Math.round(baseFatigue + perclos * FATIGUE_MULTIPLIER));
   currentFatigue = fatigue;
 
   updateFatigueUI(fatigue);
