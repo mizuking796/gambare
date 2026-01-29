@@ -7,6 +7,7 @@ const ALERT_START_THRESHOLD = 50;    // 50%から2秒毎にアラート
 const CONTINUOUS_THRESHOLD = 70;      // 70%から連続再生
 const EYE_CLOSED_DURATION = 5000;     // 5秒閉眼でアラート
 const ALERT_INTERVAL = 2000;          // 2秒毎にアラート（50-69%時）
+const ALERT_COOLDOWN = 10 * 1000;     // 10秒間のクールタイム
 // ============================================
 
 const video = document.getElementById("video");
@@ -31,6 +32,7 @@ let alertAudio = null;
 let isPlaying = false;
 let alertIntervalId = null;
 let currentAlertMode = 'none';  // 'none', 'interval', 'continuous'
+let lastAlertStopTime = 0;      // アラート停止時刻
 
 // Eye tracking
 let eyeClosedStartTime = null;  // 閉眼開始時刻
@@ -101,6 +103,11 @@ function stopAudio() {
   currentAlertMode = 'none';
 }
 
+// Check if in cooldown period
+function isInCooldown() {
+  return (Date.now() - lastAlertStopTime) < ALERT_COOLDOWN;
+}
+
 // Update alert based on fatigue and eye state
 function updateAlert(fatigue, eyeOpen) {
   // 開眼確認で即停止
@@ -108,8 +115,17 @@ function updateAlert(fatigue, eyeOpen) {
     if (currentAlertMode !== 'none') {
       stopAudio();
       eyeClosedWarningEl.classList.add('hidden');
+      lastAlertStopTime = Date.now();  // クールタイム開始
     }
     eyeClosedStartTime = null;
+    return;
+  }
+
+  // クールタイム中はアラートを鳴らさない
+  if (isInCooldown()) {
+    const remaining = Math.ceil((ALERT_COOLDOWN - (Date.now() - lastAlertStopTime)) / 1000);
+    eyeClosedWarningEl.classList.remove('hidden');
+    eyeClosedWarningEl.textContent = `クールタイム ${remaining}秒`;
     return;
   }
 
