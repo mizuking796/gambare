@@ -65,24 +65,35 @@ function initAudio() {
 
 // Play alert once
 function playAlertOnce() {
-  if (!alertAudio) return;
+  if (!alertAudio) {
+    console.log('playAlertOnce: alertAudio is null');
+    return;
+  }
 
+  console.log('playAlertOnce: attempting to play');
   alertAudio.currentTime = 0;
   alertAudio.play().then(() => {
+    console.log('playAlertOnce: playing successfully');
     isPlaying = true;
   }).catch(e => {
-    console.error('Audio play failed:', e);
+    console.error('playAlertOnce failed:', e);
   });
 }
 
 // Start continuous playback
 function startContinuousPlay() {
-  if (!alertAudio) return;
+  if (!alertAudio) {
+    console.log('startContinuousPlay: alertAudio is null');
+    return;
+  }
 
+  console.log('startContinuousPlay: attempting to play');
   alertAudio.loop = true;
   alertAudio.currentTime = 0;
-  alertAudio.play().catch(e => {
-    console.error('Audio play failed:', e);
+  alertAudio.play().then(() => {
+    console.log('startContinuousPlay: playing successfully');
+  }).catch(e => {
+    console.error('startContinuousPlay failed:', e);
   });
 }
 
@@ -171,15 +182,17 @@ function updateAlert(fatigue, eyeOpen) {
 
   // 疲労度ベースのアラート
   if (fatigue >= CONTINUOUS_THRESHOLD) {
-    // 80%以上：連続再生
+    // 70%以上：連続再生
     if (currentAlertMode !== 'continuous') {
+      console.log('Alert: fatigue >= 70%, starting continuous play');
       stopAudio();
       startContinuousPlay();
       currentAlertMode = 'continuous';
     }
   } else if (fatigue >= ALERT_START_THRESHOLD) {
-    // 60-79%：2秒毎
+    // 50-69%：2秒毎
     if (currentAlertMode !== 'interval') {
+      console.log('Alert: fatigue >= 50%, starting interval play');
       stopAudio();
       playAlertOnce();
       alertIntervalId = setInterval(() => {
@@ -188,7 +201,7 @@ function updateAlert(fatigue, eyeOpen) {
       currentAlertMode = 'interval';
     }
   } else {
-    // 60%未満：停止
+    // 50%未満：停止
     if (currentAlertMode !== 'none') {
       stopAudio();
     }
